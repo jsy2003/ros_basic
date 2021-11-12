@@ -11,3 +11,7 @@ $rosrun ros_basic_pkg simple_node
 or
 
 $roslaunch ros_basic_pkg my_simple_launch.launch
+
+$rosrun ros_basic_pkg publsiher_cpp
+
+$rqt_graph
