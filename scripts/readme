@@ -1,3 +1,5 @@
+<< use >>
+
 $chmod +x simple_node.py
 
 $rosrun ros_basic_pkg simple_node.py
