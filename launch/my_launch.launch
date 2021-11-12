@@ -1,4 +1,5 @@
 <launch>
   <node name="publisher_cpp" pkg="ros_basic_pkg" type="publisher_cpp" output="screen" />  
+  <node name="subscriber_cpp" pkg="ros_basic_pkg" type="subscriber_cpp" output="screen" />
   
 </launch>
