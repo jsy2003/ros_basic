@@ -1,4 +1,8 @@
 <launch>
+  <!-- cpp -->
   <node name="simple_node" pkg="ros_basic_pkg" type="simple_node" output="screen" />
+  
+  <!-- python -->
+  <node name="simple_node_py" pkg="ros_basic_pkg" type="simple_node.py" output="screen" />
   
 </launch>
