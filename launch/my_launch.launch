@@ -2,6 +2,8 @@
   <!-- CPP -->
   <node name="publisher_cpp" pkg="ros_basic_pkg" type="publisher_cpp" output="screen" />  
   <node name="subscriber_cpp" pkg="ros_basic_pkg" type="subscriber_cpp" output="screen" />
+  <node name="service_server_node_cpp" pkg="ros_basic_pkg" type="service_server_node_cpp" output="screen" />  
+  <node name="service_client_node_cpp" pkg="ros_basic_pkg" type="service_client_node_cpp" output="screen" />
   
   <!-- python -->
   <node name="publisher_py_node" pkg="ros_basic_pkg" type="py_publisher.py" output="screen" />
