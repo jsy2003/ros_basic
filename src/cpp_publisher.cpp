@@ -17,6 +17,7 @@ int main(int argc, char **argv)
     ROS_INFO("publisher_cpp node started and publishing data on topic_cpp");
     ros::Rate loop_rate(10);
     
+    // http://docs.ros.org/en/jade/api/std_msgs/html/msg/Int32.html
     std_msgs::Int32 count;  
     count.data = 0;
     
