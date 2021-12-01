@@ -19,8 +19,12 @@ class myRobot():
       speed_cmd.linear.x = speed
       self.wheels_pub.publish(speed_cmd)
       
-rospy.init_node("my_node")
-robot = myRobot("pepito", 0.5)
-rosot.set_speed(0.2)
-rospy.spin()
-
+#rospy.init_node("my_node")
+#robot = myRobot("pepito", 0.5)
+#rosot.set_speed(0.2)
+#rospy.spin()
+if __name__ == "__main__":
+    rospy.init_node("my_node")
+    robot = myRobot("pepito", 0.5)
+    robot.set_speed(0.3)
+    rospy.spin()
