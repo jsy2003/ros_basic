@@ -143,6 +143,9 @@ target_link_libraries(action_server_node_cpp ${catkin_LIBRARIES})
 add_executable(action_client_node_cpp src/cpp_action_client.cpp)
 target_link_libraries(action_client_node_cpp ${catkin_LIBRARIES})
 
+add_executable(my_cpp_program src/my_cpp_program.cpp)
+target_link_libraries(my_cpp_program ${catkin_LIBRARIES})
+add_dependencies(my_cpp_program ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 ## Declare a C++ library
