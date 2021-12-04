@@ -65,6 +65,37 @@ catkin_create_pkg를 사용하려면 <package_name>과 선택적으로 해당 �
 ```
 
 ## ROS package build
+패키지를 빌드하려면 아래명열을 입력하고, ROS 환경를 업데이트 해야한다.
+```
+        $ cd ~/catkin_ws
+        $ catkin_make
+        $ source /devel/setup.bash
+```
+선택한 패키지만 빌드할경우 아래 명령을 사용한다.
+```
+        $ cd ~/catkin_ws
+        $ catkin_make --pkg <package1> <package2>...
+        $ source devel/setup.bash
+```
+
+## ROS node
+ROS node 는 로봇을 실행하기 위한 코드 조각이다. 로봇 어플리케이션은 하나이 상의 노드를 가질수 있다.
+예를들어 역기구학을 계산하는 노드, 액추에이터에 명령을 보내는 노드, 센서등에서 관절값을 가져오는 노드 등등...
+이 모든 노드는 메세지를 통해 서로 통신한다. 이 모든 노드를 관장하기 위해 하나의 마스터 노드가 있다.
+
+이 마스터노드를 roscore 라고하고 노드를 실행하기전에 제일먼저 실행되어야 한다.
+
+노드가 통신할수 있는 세가지 모드가 있다. topic, service, action 
+
+## ROS node coding
+노드는 c++, 파이썬 으로 코딩할수 있다.
+
+- 파이썬 코딩
+catkin_ws/src 에 패키지를 생서한다음 그 안에 scripts 라는 폴더를 만들다.
+```
+        $ cd ~/catkin_ws/src/tutorials
+        $ mkdir scripts
+```
 
    
 
