@@ -90,7 +90,8 @@ ROS node 는 로봇을 실행하기 위한 코드 조각(실행파일)이다. �
 ## ROS node coding
 노드는 c++, 파이썬 으로 코딩할수 있다.
 
-- 파이썬 코딩
+### 파이썬 노드 코딩
+
 catkin_ws/src 에 패키지를 생서한다음 그 안에 scripts 라는 폴더를 만들다.
 ```
         $ cd ~/catkin_ws/src/tutorials
@@ -141,8 +142,50 @@ Python 노드를 실행하는 형식은 아래와 같고, 파이썬으로 노드
         $ rosrun <패키지 이름> <파이썬 노드 이름>
 ```
 
-- c++ 노드 코딩
+### c++ 노드 코딩
+패키지의 /src 폴더로 이동한다음 simple_node.cpp 파일을 만든다. 이파일에서도 "simple_node_cpp" 라는 이름의 노드를 
+초기화 하고 Ctrl+c 를 눌러 종료될때까지 루프를 실행한다.
+```
+        #include <ros/ros.h>
+        int main(int argc, char **argv)
+        {
+                int count=0;
+                ros::init(argc, argv, "simple_node_cpp");
+                ros::NodeHandle nh;
+                ros::Rate loop_rate(10);
+                while(ros::ok())
+                {
+                        ROS_INFO("simple_node in cpp is running. count= %d",count);// Debug statement
+                        ros::spinOnce();
+                        count++;
+                        loop_rate.sleep();
+                 }
+          }
+```
+CPP 로 작성된 노드를 실행가능하게 하여면 CmakeList.txt 에 아래의 내용을 추가해야 한다음
+패키지를 빌드한다.
+```
+        add_executable(simple_node_cpp src/simple_node.cpp)
+        target_link_libraries(simple_node_cpp ${catkin_LIBRARIES})
+```
+```
+        $ cd ~/catkin_ws
+        $ catkin_make
+        $ source devel/setup.bash
+```
+마찬가지로 roscore 를 실행하고 아래 명령으로 노드를 실행한다.
+```
+        $ rosrun tutorials simple_node_cpp
+```
 
+### 노드와 관련된 명령 일부
+```
+        $ rosnode list                  --> 활성노드들을 나열한다
+        $ rosnode info /node_name       --> 특정노드의 정보를 얻는다
+        $ rosnode kill /node_name       --> 실행중인 노드 종료
+```
+
+## ROS message
 
 
 
