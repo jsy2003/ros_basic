@@ -79,7 +79,7 @@ catkin_create_pkg를 사용하려면 <package_name>과 선택적으로 해당 �
 ```
 
 ## ROS node
-ROS node 는 로봇을 실행하기 위한 코드 조각이다. 로봇 어플리케이션은 하나이 상의 노드를 가질수 있다.
+ROS node 는 로봇을 실행하기 위한 코드 조각(실행파일)이다. 로봇 어플리케이션은 하나이 상의 노드를 가질수 있다.
 예를들어 역기구학을 계산하는 노드, 액추에이터에 명령을 보내는 노드, 센서등에서 관절값을 가져오는 노드 등등...
 이 모든 노드는 메세지를 통해 서로 통신한다. 이 모든 노드를 관장하기 위해 하나의 마스터 노드가 있다.
 
@@ -96,3 +96,64 @@ catkin_ws/src 에 패키지를 생서한다음 그 안에 scripts 라는 폴더�
         $ cd ~/catkin_ws/src/tutorials
         $ mkdir scripts
 ```
+scripts 폴더안에 simple_node.py 파일을 만든다. 이 파일에서 "simple_node_py" 라는 이름으로 노드를 초기화하고
+노드가 종료될때까지 루프를 실행한다.
+```
+        #!/usr/bin/env python or python3
+        import rospy
+        count =0
+        rospy.init_node("simple_node_py")
+        rate= rospy.Rate(10)            # 10hz
+        while not rospy.is_shutdown():
+                rospy.loginfo("simple_node in python is running. count= %d",count) #debug statement
+                count +=1
+                rate.sleep()
+```
+파이썬으로 만든 노드를 실행 가능하게 하기 위해서는 아래명령을 한번 실행해야 한다
+```
+        $ cd ~/catkin_ws/src/toturials/scripts
+        $ chmod +x simple_node.py
+```
+파일을 실행가능하게 만든후 ROS 환경에서 파일을 업데이트 해야 한다.
+```
+        $ cd ~/catkin_ws
+        $ source devel/setup.bash
+```
+ROS 노드를 실행하기전에 ROS 마스터 노드를 실행해야 한다. ROS 마스터 노드가 없으면 노드를 실행할수 없다.
+따라서 노드를 실행하디 전에 별도의 터미널에서 마스트 노드를 실행해야 한다.
+```
+        $ roscore
+```
+만들어진 노들 실행하기 위해서는 아래의 명령을 별도의 터미널에서 아래의 명령을 입력한다.
+```
+        $ rosrun tutorials simple_node.py
+```
+### /roscore 터미널
+![image](https://user-images.githubusercontent.com/93853610/144700369-719af70e-5726-426b-b92b-2f2a1dbaf822.png)
+
+### /simple_node_py 터미널
+![image](https://user-images.githubusercontent.com/93853610/144700407-c0138029-c566-4b35-b889-81290aba5bd7.png)
+
+노드를 중지할때는 Ctrl+C 를 사용한다.
+
+Python 노드를 실행하는 형식은 아래와 같고, 파이썬으로 노드를 만들때는 패키지를 빌드할필요가 없다.
+```
+        $ rosrun <패키지 이름> <파이썬 노드 이름>
+```
+
+- c++ 노드 코딩
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
