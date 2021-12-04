@@ -32,21 +32,41 @@ ROS는 로봇 으용 프로그램의 개발을 쉽게하기 위해 만들어진 
 
 
 ## ROS workspace  생성:
-  ROS 는 catkin 을 사용하여 ROS 프로젝트를 빌드한다. 따라서 먼저 catkin workspace 를 만드어야 한다.
-  먼저 terminal 에서 다음과같이 작업공간을 만든다.
+ROS 는 catkin 을 사용하여 ROS 프로젝트를 빌드한다. 따라서 먼저 catkin workspace 를 만드어야 한다.
+먼저 terminal 에서 다음과같이 작업공간을 만든다.
 ```
-    $ mkdir -p catkin_ws/src
-    $ cd catkin_ws
-    $ catkin_make
-    $ source devel/setup.bash
+        $ mkdir -p catkin_ws/src
+        $ cd catkin_ws
+        $ catkin_make
+        $ source devel/setup.bash
 ```
-  catkin_ws 내부를 보면 세개의 하위 폴더가 생성됨을 볼수 있다.
+catkin_ws 내부를 보면 세개의 하위 폴더가 생성됨을 볼수 있다.
 ```    
-    /src    --  소스공간
-    /build  --  빌드공간
-    /devel  --  개발공간
+        /src    --  소스공간
+        /build  --  빌드공간
+        /devel  --  개발공간
+```
+소스코드 파일이 포함된 로봇 프로젝트용 패키지를 생서하는 소스공간(/src) 에서 작업한다.
+이러한 패키지를 catkin package 라고 한다.
+   
+catkin package를 만들기 위해서는 터미널에서 다음과같이 입력한다
+```
+        $ cd ~/catkin_ws/src
+        $ catkin_create_pkg  <user_package_name>  std_msgs roscpp rospy 
+```
+이렇게하면 package.xml, CMakelist.txt 가 포함된 <user_package_name> 폴더가 생성된다.
+"std_msgs", "rospy", "roscpp" 는 패키지가 의존하는 종속성 목록이다.
+   
+catkin_create_pkg를 사용하려면 <package_name>과 선택적으로 해당 패키지가 의존하는 종속성 목록을 제공해야 한다.
+
+형식은 아래와 같다.
+```
+        $ catkin_create_pkg  <pacakge_name> [depend1] [depend2] [depend3] ...
 ```
 
+## ROS package build
+
+   
 
     
     
