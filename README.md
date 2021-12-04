@@ -186,6 +186,62 @@ CPP 로 작성된 노드를 실행가능하게 하여면 CmakeList.txt 에 아�
 ```
 
 ## ROS message
+ROS 메세지는 노드간 정보를 전소하기 위해 Topics, Service 및 Actions 에 대한 데이타 구조이다.
+- Topic
+Topic 메세지는 .msg 파일에 있다. Topic 메세지 형식은 아래와 같다.
+```
+        filetype1 filename1     --> Int32    a
+        filetype2 filename2     --> Float64  b
+        filetype3 filename3     --> Bool     c
+        ...
+```
+- Service
+Service 메세지는 .srv 파일에 있다. 이 메세지는 두 부분으로 구성된다. Request 와 Response 이다.
+요구와 응답은 '---' 구분한다. 형식은 아래와 같다
+```
+        #Request
+        fieldType1      fieldname1
+        ..
+        ---
+        #Response
+        fieldType2      fieldName2
+        ...
+```
+- Action
+Action은 .action 파일에 있다. 이 메세지는 세부분으로 구성된다. 목표, 결과, 피드백 부분으로 구성된다.
+구분을 '---' 구분한다. 형식은 아래와 같다.
+```
+        #goal
+        fieldType1   fieldName1
+        ...
+        ---
+        #result
+        filedType2   filedName2
+        ...
+        ---
+        #feedback
+        filedType3   filedName3
+        ...
+```
+ROS 에는 미리정의된 많은 메세지가 있다(ROS 위키 메세지 참조)
+또한 사용자 정의 메세지를 만드들어 사용할수 있다(CMakeList.txt 참조)
+
+### 메세지 관련 명령 일부
+```
+        $rosmsg list            --> topic, action  메세지를 보여줌
+        $rossrv list            --> service 메세지를 보여줌
+        
+        $rosmsg <package_name>  --> 메세지파일을 포함하는 패키지 목록 
+        $rossrv <package_name>
+        
+        $rosmsg show package_name/message_name  --> 메세지 형식을 나열
+        $rossrv show package_name/message_name
+        
+        <예>
+        $rosmsg show std_msgs/Int32
+        $rossrv show tutorials/AddTwoInts
+        
+```
 
 
 
