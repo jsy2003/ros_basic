@@ -244,8 +244,123 @@ ROS 에는 미리정의된 많은 메세지가 있다(ROS 위키 메세지 참�
 ```
 
 ## ROS Topic
+Topic은 노드가 메세지를 교환하는 명명된 버스이다. 이것은 ROS 에서 노드에 대해 가장 일반적으로 사용되는 통신모드이다.
+이 모드에서 노드는  topic 이름이 있는 메세지를 브로드캐스팅 한다. 이 브로드캐스트 노드를 publisher 노드라고 한다.
 
+메세지를 수신하려는 노드를 subscriber 노드라고 한다.
 
+이 통신 모드는 단방향이다. 이 노드는 자신이 누구와 통신하고 있는 알지 못한다. 즉, publisher 는 subscriber 가 없거나 여러명 있어서 계속 publish 한다. 마찬가지로 subscriber 는 publisher 가 없거나 여러개인 경우 topic 을 계속 subscribe 한다.publisher 와 subscriber 가 동일한 topic에 대해 연결을 설정하는 것은 ROS 마스터이다.
+
+Topic은 주로 센서데이타, 로봇관정상태 등과 같은 연속적인 데이타 스트림에 가방 적합하다.
+
+## Publisher/ Subscriber node coding
+### python 코드:
+scripts 폴더로 이동하여 py_publisher.py 와 py_subscriber.py 파일을 작성한다음 실행 파일로 만들고 실행시킨다.
+실행하기전에 roscore을 먼저실행한다.
+
+ #### [py_publisher.py]
+```     
+      
+        #!/usr/bin/env python
+        
+        from std_msgs.msg import Int32
+        rospy.init_node("publisger_py")
+        pub = rospy.Publisher("topic_py", Int32, queue_size=10)
+        rospy.loginfo("publisher_py node started and publishing data on topic_py")
+        rate = rospy.Rate(10)
+        count=Int32()
+        count.data = 0
+        while not rospy.is_shutdown():
+                pub.publish(count)
+                count.data += 1
+                rate.sleep()
+```
+
+#### [py_subscriber.py]
+
+```     
+        #!/usr/bin/env python
+        
+        import rospy
+        from std_msgs.msg import Int32
+        
+        def my_callback(msg):
+                rospy.loginfo("received data from topic_py: %d", msg.data)
+        
+        rospy.init_node("subscriber_py")
+        rospy.Subscriber("topic_py", Int32, my_callback, queue_size=10)
+        rospy.loginfo("subscriber_py node started and subscribed to topic_py") #debug statement
+        rospy.spin()
+```
+
+### C++ 코드
+src 폴더로 이동하여 cpp_publisher.cpp 와 cpp_subscriber.cpp 파일을 작성한다.
+그런다음 CMakelist.txt 파일을 수정한다음 빌드하고 실행한다
+
+#### [cpp_publisher.cpp]
+```
+        #include <ros/ros.h>
+        #include <std_msgs/Int32.h>
+        
+        int main(int argc, char **argv)
+        {
+                ros::init(argc, argv, "publisher_cpp");
+                ros::NodeHandle nh;
+                
+                ros::Publisher pub = nh.advertise<std_msgs::Int32>("topic_cpp", 10);
+                ROS_INFO("publisher_cpp node started and publishing data on topic_cpp");
+                ros::Rate loop_rate(10);
+                std_msgs::Int32 count;
+                count.data = 0;
+                whule(ros::ok())
+                {
+                        pub.publish(count);
+                        count.data++;
+                        loop_rate.sleep();
+                 }
+                 return 0;
+         }
+```
+
+#### [cpp_subscriber.cpp]
+```
+        #include <ros/ros.h>
+        #include <std_msgs/Int32.h>
+        
+        void my_callback(const std_msgs::Int32::ConstPtr &msg)
+        {
+                ROS_INFO("received data from topic_cpp: [%ld]", (long int)msg->data);
+        }
+        
+        int main(int argc, char **argv)
+        {
+                ros::init(argc, argv, "subscriber_cpp");
+                ros::NodeHandle nh;
+                ros::Subscriber sub = nh.subscribe("topic_cpp", 10, my_callback)
+                ROS_INFO("subscriber_cpp node started and subscribed to topic_cpp");
+                ros::spin();
+                return 0;
+        }
+```
+
+#### [CMakeList.txt]
+```
+        add_executable(pubslisher_cpp src/cpp_publisher.cpp)
+        target_link_libraries(publisher_cpp ${catkin_LIBRARIES})
+        
+        add_executable(subscriber_cpp src/cpp_subscriber.cpp)
+        target_link_libraries(scriber_cpp ${catkin_LIBRARIES})
+```
+
+### topic  명령
+```
+        $rostpic list                   --> 노드별로 pubslisher/subscriber topic 나열
+        $rostopic info /topic_name      --> 특정 topic 정보
+        $rostipic type /topic_name      --> topic 메세지 유형
+        $rostopic echo /topic_name      --> 터미널에 topic 데이타 출력
+        $rostopic pub /topic_name [messagetype] "data:value"
+            --> $rostopic pub /topic_name std_msgs/Int32 "data:10"
+```
 
 
 
