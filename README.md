@@ -529,10 +529,383 @@ actionlib의 패키지를 만들 수있는 도구를 제공 서버 의 목표를
 
 사용법: 액션은 로봇 동작 또는 인식 실행과 같은 더 긴 작업에 사용됩니다
 
+### 패키지 종속성 추가
+ROS Actions를 실행하려면 CMakelists.txt 에 actionlib 및 actionlib_msgs를 추가 합니다.
+```
+	find_package(catkin REQUIRED COMPONENTS
+		roscpp
+		rospy
+		std_msgs
+		actionlib
+		actionlib_msgs	
+	)	
+```
+아래와 같이 package.xml 파일에 아래 행을 추가해야 합니다 .
+```
+	<build_depend>actionlib</build_depend>
+	<build_depend>actionlib_msgs</build_depend>
+	...
+	
+	<build_export_depend>actionlib</build_export_depend>
+	<build_export_depend>actionlib_msgs</build_export_depend>
+	...
+
+  	<exec_depend>actionlib</exec_depend>
+	<exec_depend>actionlib_msgs</exec_depend>
+	...
+```
+
+### [파이썬 코드]
+스크립트 폴더로 이동하여 py_action_server.py  및  py_action_client.py  파일을 작성한다
+
+#### [py_action_server.py]
+```
+	#!/usr/bin/env python
+import rospy
+import actionlib # import actionlib library
+from actionlib.msg import TestAction, TestGoal, TestResult, TestFeedback # Messages used in the node must be imported.
+
+'''
+This is the execute callback function that will run everytime a new goal is received. The argument "g" has the goal information of the action.
+'''
+def execute_cb(g):
+
+	fb = TestFeedback() # declaring a feedback varible of the action message. 
+	res= TestResult()   # declaring a result varible of the action message.
+	
+	success = True
+	r = rospy.Rate(1) # 1 hz
+	fb.feedback=1
+	multiplier=2
+
+	while (multiplier <= g.goal):		
+		if server.is_preempt_requested(): # check that preempt has not been requested by the client
+			rospy.loginfo('The goal has been cancelled/preempted')
+			server.set_preempted() # set_preempted function will signals that the action has been preempted by user request. 
+			success = False
+			break
+			
+		fb.feedback=fb.feedback*multiplier
+		multiplier+=1
+		server.publish_feedback(fb) # Here the feedback variable is published on the feedback channel provided by the action server.
+		r.sleep() # This will make the loop to iterate at rate 1 hz i.e, 1 iteration/sec
+		
+	if success:
+		res.result = fb.feedback # assgining the final value to the result variable of the action
+		rospy.loginfo('Succeeded calculating the Factorial of %d in time. %d!= %d', g.goal, g.goal, res.result)
+		server.set_succeeded(res) # Once the action has finished computing, the action server notifies the action client that the goal is complete by calling set_succeeded. 
+
+rospy.init_node('action_server_node_py') # initialzing the node with name "action_server_node_py"
+
+'''
+In the next line, a ActionServer is created.
+First argument is the name of the action.
+Second argument is the action message type.
+Thrid argument is an execute callback function that will be called whenever a new goal is received. 
+Fourth argument is auto_start. You should always set auto_start to False explicitly TO AVOID RACE CONDITIONS and start() should be called after construction of the server.
+'''
+server = actionlib.SimpleActionServer("factorial_py", TestAction, execute_cb, False)
+server.start()
+rospy.loginfo('Python Action server started to find the factorial of a number')
+
+'''
+rospy.spin() simply keeps your node from exiting until the node has been shutdown. Unlike roscpp::spin(), rospy.spin() does not affect the subscriber callback functions, as those have their own threads.
+'''
+rospy.spin()
+```
+
+#### [py_action_client.py]
+```
+	#!/usr/bin/env python
+import rospy
+import actionlib # import actionlib library
+from actionlib_msgs.msg import GoalStatus
+from actionlib.msg import TestAction, TestGoal, TestResult, TestFeedback # Messages used in the node must be imported.
+
+fac=0
+
+'''
+This method is called whenever there is data present on feedback channel
+'''
+def feedback_callback(feedback):
+	global fac
+	rospy.loginfo("Done till %d! = %d",fac,feedback.feedback)
+	fac+=1
+
+def factorial(num):
+	global fac
+	rate = rospy.Rate(1) # 1 hz
+	count=0
+	fac=2
+	
+	g= TestGoal() # Create a goal variable to send to the action server.
+	g.goal=num
+
+	client.wait_for_server() # This line waits until we are connected to the action server.
+
+	'''
+	In the next line goal is sent to the action server.
+	The first argument is the goal variable of the action.
+	The second argument is the name of the callback method that is called whenever there is data on feedback channel
+	'''
+	client.send_goal(g, feedback_cb=feedback_callback) # Send the goal to the action server.
+	
+	goal_state = client.get_state() # Get the state of the goal. Possible states are PENDING, ACTIVE, RECALLED, REJECTED, PREEMPTED, ABORTED, SUCCEEDED, LOST.
+	
+	
+	while not (goal_state == GoalStatus.PREEMPTED or goal_state == GoalStatus.SUCCEEDED): # Run the loop until the goal is success or preempted.
+		if count > 10: # This condition is to make the loop run for approx 10 secs. After 10 secs, the goal is preempted and loop is exited.
+			rospy.loginfo("Time exceed the limit hence preempting the action")
+			client.cancel_goal() # This line will preempt the goal
+			break
+
+		goal_state = client.get_state()
+		count+=1
+		rate.sleep() # This will make the loop to iterate at rate 1 hz i.e, 1 iteration/sec
+		
+	
+	rate.sleep()
+	goal_state = client.get_state()
+	
+	if (goal_state == GoalStatus.SUCCEEDED):
+		rospy.loginfo("Action completed in Time. %d!= %d",g.goal, client.get_result().result)
 
 
+if __name__=="__main__":
+	rospy.init_node('action_client_node_py') # initialzing the node with name "action_client_node_py"
+	
+	'''
+	In the next line, a ActionClient is created.
+	First argument is the name of the action.
+	Second argument is the action message type.
+	'''
+	client = actionlib.SimpleActionClient("factorial_py", TestAction)
+	
+	factorial(8) 
+	factorial(14)
+```
+
+### [C++ 코드]
+src 폴더로 이동하여 cpp_action_server.cpp  및  cpp_action_client.cpp 파일을 작성한다
+#### [cpp_action_server.cpp]
+```
+	#include "ros/ros.h"
+#include <actionlib/server/simple_action_server.h> // This is the action library used for implementing simple actions.
+#include <actionlib/TestAction.h> // Messages used in the node must be included.
+
+/*
+This is the execute callback function that will run everytime a new goal is received. The argument "g" has the goal information of the action.
+*/
+void execute(const actionlib::TestGoalConstPtr& g, actionlib::SimpleActionServer<actionlib::TestAction>* server)  
+{
+
+	actionlib::TestFeedback fb; // declaring a feedback varible of the action message. 
+	actionlib::TestResult res; // declaring a result varible of the action message. 	
+	
+	bool success = true;
+	ros::Rate loop_rate(1); // 1 hz
+	fb.feedback=1;
+	int multiplier=2;
+
+	while (multiplier <= g->goal)
+	{
+		if (server->isPreemptRequested()) // check that preempt has not been requested by the client
+		{
+			ROS_INFO("The goal has been cancelled/preempted");
+			server->setPreempted(); // set_preempted function will signals that the action has been preempted by user request. 
+			success = false;
+			break;
+		}
+			
+		fb.feedback=fb.feedback*multiplier;
+		multiplier++;
+		server->publishFeedback(fb); // Here the feedback variable is published on the feedback channel provided by the action server.
+		loop_rate.sleep(); // This will make the loop to iterate at rate 1 hz i.e, 1 iteration/sec
+	}
+		
+	if (success)
+	{
+		res.result = fb.feedback; // assgining the final value to the result variable of the action
+		ROS_INFO("Succeeded calculating the Fibonacci of order %d",res.result);
+		server->setSucceeded(res); // Once the action has finished computing, the action server notifies the action client that the goal is complete by calling set_succeeded. 
+	}
+}
 
 
+int main(int argc, char** argv)
+{
+	ros::init(argc, argv, "action_server_node_cpp"); // Node declared with name "service_server_node_cpp"
+	ros::NodeHandle nh; // NodeHandle will actually initialze the node
+	
+/*
+In the next line, a ActionServer is created.
+First argument is the node handle.
+Second argument is the name of the action.
+Thrid argument is an execute callback function that will be called whenever a new goal is received. 
+Fourth argument is auto_start. You should always set auto_start to False explicitly TO AVOID RACE CONDITIONS and start() should be called after construction of the server.
+*/
+	actionlib::SimpleActionServer<actionlib::TestAction> server(nh, "factorial_cpp", boost::bind(&execute, _1, &server), false);
+	server.start();
+	ROS_INFO("CPP Action server started to find the factorial of a number");
 
+/*
+ros::spin() is used to call the callback methods in the code. Without out spin(), callback methods are never executed. 
+ros::spin() enters a loop, and  will exit once Ctrl-C is pressed.
+*/
+	ros::spin();
+	return 0;
+}
+```
 
+#### [cpp_action_client.cpp]
+```
+	#include "ros/ros.h"
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/TestAction.h>
 
+int fac;
+
+/*
+This method is called when the goal completes
+*/
+void doneCb(const actionlib::SimpleClientGoalState& s,const actionlib::TestResultConstPtr& result)
+{
+	if (s == actionlib::SimpleClientGoalState::SUCCEEDED)
+		ROS_INFO("Action completed in Time. Answer= %d", result->result);
+	else
+		ROS_INFO("Action is preempted");	
+}
+
+/*
+ This method is called when the goal becomes active
+*/
+void activeCb()
+{
+	ROS_INFO("Goal just went active");
+}
+
+/*
+This method is called whenever there is data present on feedback channel
+*/
+void feedback_callback(const actionlib::TestFeedbackConstPtr& feedback)
+{
+	ROS_INFO("Done till %d! =  %d",fac,feedback->feedback);
+	fac++;
+}
+
+void factorial(int num)
+{
+	int count=0;
+	fac=2;
+	ros::Rate loop_rate(1); // 1 hz
+	
+	actionlib::TestGoal g; // Create a goal variable to send to the action server.
+	g.goal=num;
+	
+/*
+In the next line, a ActionClient is created.
+First argument is the name of the action.
+Second argument is spin_thread. If true, spins up a thread to service this action's subscriptions. If false, then the user has to call ros::spin() themselves. Defaults to True
+*/
+	actionlib::SimpleActionClient<actionlib::TestAction> client("factorial_cpp", true);
+	
+	client.waitForServer(); // This line waits until we are connected to the action server.
+	
+/*
+In the next line goal is sent to the action server.
+The first argument is the goal variable of the action.s
+The second argument is the name of the callback method that is called when the goal completes
+The third argument is the name of the callback method that is called when the goal becomes active
+The fourth argument is the name of the callback method that is called whenever there is data on feedback channel
+*/
+	client.sendGoal(g, &doneCb, &activeCb, &feedback_callback);
+	
+	actionlib::SimpleClientGoalState state=client.getState(); // Get the state of the goal. Possible states are PENDING, ACTIVE, RECALLED, REJECTED, PREEMPTED, ABORTED, SUCCEEDED, LOST.
+
+	while(!(state == actionlib::SimpleClientGoalState::PREEMPTED || state == actionlib::SimpleClientGoalState::SUCCEEDED)) // Run the loop until the goal is success or preempted.
+	{
+		if (count > 10) // This condition is to make the loop run for approx 10 secs. After 10 secs, the goal is preempted and loop is exited.
+		{
+			ROS_INFO("time exceed the limit hence preempting"); 
+			client.cancelGoal(); // This line will preempt the goal
+			break;
+		}
+
+		state = client.getState(); // Get the state of the goal.
+		count++;
+		loop_rate.sleep(); // This will make the loop to iterate at rate 1 hz i.e, 1 iteration/sec
+	}
+	
+	loop_rate.sleep();
+	state = client.getState();	
+	ROS_INFO("Goal state: %s",state.toString().c_str());
+	
+			
+}
+
+int main(int argc, char** argv)
+{
+	ros::init(argc, argv, "action_clien_node_cpp"); // Node declared with name "service_server_node_cpp"
+	ros::NodeHandle nh; // NodeHandle will actually initialze the node
+	factorial(8);
+	factorial(14);
+	
+	return 0;
+
+}	
+```
+#### [CMakeList.txt]
+```
+        add_executable(action_server_node_cpp src/cpp_action_server.cpp)
+	target_link_libraries(action_server_node_cpp ${catkin_LIBRARIES})
+
+	add_executable(action_client_node_cpp src/cpp_action_client.cpp)
+	target_link_libraries(action_client_node_cpp ${catkin_LIBRARIES})
+```
+
+## launch 파일
+지금까지 우리는 별도의 터미널에서 각 노드를 실행했습니다. 초보자_자습서 패키지의 모든 노드를 한 번에 실행하려면 어떻게 해야 할까요? 그러면 10개 이상의 터미널을 열어야 할 수도 있습니다. 그것은 엉망이 될 것입니다.
+
+이러한 경우 시작 파일이 유용할 것입니다. 실행 파일은 여러 노드를 실행하고 변수를 ROS 매개변수 서버에 로드하는 등의 작업에 사용할 수 있는 xml 파일 형식입니다. 실행 파일에 다른 실행 파일을 포함할 수도 있습니다. roslaunch를 사용하는 경우 roscore가 이미 실행되고 있지 않음을 감지하면 자동으로 roscore를 시작하므로 명시적으로 roscore를 실행할 필요가 없습니다. 시작 파일을 사용하여 노드를 실행하는 것이 좋습니다.
+
+시작 파일에 대한 설명은 <launch> 태그 내에 있어야 합니다.
+```
+	<launch>
+		....
+	</launch>
+```
+
+실행을 사용하여 노드를 실행하는 형식은 다음과 같습니다.
+```
+	<launch>
+		 <node name="name_of_node" pkg="package_of_node" type="cpp or py" output ="screen"/>
+	</launch>
+```
+"type" 인수는 py 노드와 cpp 노드를 구별하는 데 사용됩니다. 노드가 cpp 노드인 경우 type 인수는 노드의 이름이 됩니다. 노드가 파이썬 노드인 경우 type 인수는 파이썬 파일의 이름이 됩니다.
+
+output="screen"은 디버그 문이 터미널 창에 표시되도록 합니다. 이 인수가 없으면 디버그가 터미널 창에 표시되지 않습니다.
+
+아래와 같이 패키지 폴더로 이동한다음 launch 폴더를 만든다
+```
+	$ cd ~/your_folder/catkin_ws/src/beginner_tutorials
+	$ mkdir launch	
+```
+아래와 같이 my_launch.launch 파일을 만든다.
+```
+	<launch>
+  		<node name="subscriber_cpp" pkg="beginner_tutorials" type="subscriber_cpp" output ="screen"/>
+  		<node name="service_server_node_cpp" pkg="beginner_tutorials" type="service_server_node_cpp" output ="screen"/>
+  		<node name="action_server_node_cpp" pkg="beginner_tutorials" type="action_server_node_cpp" output ="screen"/>
+  		<node name="subscriber_py" pkg="beginner_tutorials" type="py_subscriber.py" output ="screen"/>
+  		<node name="service_server_node_py" pkg="beginner_tutorials" type="py_service_server.py" output ="screen"/>
+  		<node name="action_server_node_py" pkg="beginner_tutorials" type="py_action_server.py" output ="screen"/>
+	</launch>
+```
+roslaunch을 이용하여 launch 파일을 실행 한다.
+```
+	$ roslaunch beginner_tutorials my_launch.launch
+```
+
+## URDF 파일
+
+	
