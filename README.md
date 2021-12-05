@@ -362,7 +362,151 @@ src 폴더로 이동하여 cpp_publisher.cpp 와 cpp_subscriber.cpp 파일을 �
             --> $rostopic pub /topic_name std_msgs/Int32 "data:10"
 ```
 
+## ROS Service
+ROS 서비스는 양방향 통신을 한다. 서비스를 제공하는 노드를 서비스 server node, 서비스를 요청하는 노드를 서비스 client node라한다.
+ROS 노드는 문자열 이름으로 서비스를 제공하고 클라이언트는 요청 메세지를 모내고 응답을 기다리면서 서비스를 호출한다.
 
+서비스는 노드 상태를 쿼리 하거나 IK 와 같은 빠른 계산을 수행하는 것과 같이 빠르게 종료되는 작업에 사용한다.
+특정 데이타를 요청하는 것과 같이 비교적 빠른 작업에 주로 사용된다.
+
+데이타를 setup 하거나 설정된 데이타를 읽거나 등등...
+
+### 파이썬 코드
+스크립터 폴더로 이동하여 py_service_server.py, py_service_client.py 파일을 작성한다.
+
+####[py_service_server.py]
+```
+        #!/usr/bin/env python
+        
+        import rospy
+        from rospy_tutorial.srv import AddTwoInts, AddTwoIntsResponse, AddTwoIntRequest
+        
+        def my_server(req):
+                res = AddTwoIntsResponse()
+                rospy.loginfo("Request received to add: %d & %d", req.a, req.b)
+                res.sum = req.a + req.b
+                return res
+        
+        rospy.init_node('service_server_node_py') 
+        rospy.Service('add_py", AddTwoInts, my_server)
+        rospy.loginfo("Python Service server ready to add two numbers")
+        rospy.spin()
+```
+
+####[py_service_client.py]
+```
+        #!/usr/bin/env python
+        
+        import rospy
+        from rospy_tutorial.srv import AddTwoInts, AddTwoIntsResponse, AddTwoIntRequest
+        
+        rospy.init_node("service_client_node_py",anonymous=True) 
+        rate = rospy.Rate(1)
+        
+        x = 0
+        y = 1
+        element = 1
+        rospy.wait_for_service("add_py")
+        
+        add = rospy.ServiceProxy("add_py", AddTwoInts)
+        
+        rospy.loginfo("Fibanocci series element 0: 0")
+        while not rospy.is_shutdown() and element < 81:
+                resp = add(x,y)
+                rospy.loginfo("Fibanocci series element %d: %d", element, resp.sum)
+                x=y
+	        y=resp.sum
+	        element+=1
+	        rate.sleep()
+```
+
+### C++ 코드
+스크립터 폴더로 이동하여 cpp_service_server.cpp, cpp_service_client.cpp 파일을 작성한다.
+CMakeList.txt 수정하고 빌드한다.
+
+#### [cpp_service_server.cpp]
+```
+        #include "ros/ros.h"
+        #include "rospy_tutorials/AddTwoInts.h" 
+
+        bool my_server(rospy_tutorials::AddTwoInts::Request &req, rospy_tutorials::AddTwoInts::Response &res)
+        {
+	        ROS_INFO("Request receiced to add: x=%ld and y=%ld ", (long int)req.a, (long int)req.b);
+	        res.sum = req.a + req.b;
+	        return true;
+        }
+
+        int main(int argc, char **argv)
+        {
+	        ros::init(argc, argv, "service_server_node_cpp"); 
+	        ros::NodeHandle nh; 
+
+	        ros::ServiceServer service = nh.advertiseService("add_cpp", my_server);
+	        ROS_INFO("Cpp Service server ready to add two numbers");
+	
+	        ros::spin();
+
+	        return 0;
+        }
+```
+
+#### [cpp_service_client.cpp]
+```
+        #include "ros/ros.h"
+        #include "rospy_tutorials/AddTwoInts.h" 
+        int main(int argc, char **argv)
+        {
+	        ros::init(argc, argv, "service_client_node_cpp"); 
+	        ros::NodeHandle nh;
+
+	        ros::ServiceClient client = nh.serviceClient<rospy_tutorials::AddTwoInts>("add_cpp");
+	
+	        rospy_tutorials::AddTwoInts var; 
+	
+	        ros::Rate loop_rate(1); // 1 hz
+	
+	        var.request.a = 0;
+	        var.request.b = 1;
+	        int element =1;
+	
+	        ROS_INFO("Fibanocci series element %d = %d", element, var.response.sum);
+	        while (ros::ok() && element < 81)
+                {
+		        client.call(var);
+		
+		        ROS_INFO("Fibanocci series element %d = %d", element, var.response.sum);
+		
+		        var.request.a = var.request.b;
+		        var.request.b = var.response.sum;
+		        element++;
+		
+		        loop_rate.sleep(); // This makes the loop to iterate at 1 Hz i.e., once in 1 sec.	
+	        }
+	        return 0;
+        }
+```
+
+#### [CMakeList.txt]
+```
+        add_executable(service_server_cpp src/cpp_service_server.cpp)
+        target_link_libraries(service_server_cpp ${catkin_LIBRARIES})
+        
+        add_executable(service_client_cpp src/cpp_service_client.cpp)
+        target_link_libraries(service_client_cpp ${catkin_LIBRARIES})
+```
+
+
+### service 명령
+```
+        $rosservice list
+        $rosservice info /service_name
+        $rosservice node /service_name
+        $rosservice type /serevide_name
+        $rosservice call /service_name service-args
+           --> $rosservice call /add_py "a:10"
+```
+
+## ROS Action
 
 
 
